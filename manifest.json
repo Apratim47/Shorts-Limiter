@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Shorts Limiter",
+  "version": "1.0",
+  "description": "Counts YouTube Shorts you watch and blanks the page when you hit your daily limit.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Shorts Limiter"
+  }
+}
