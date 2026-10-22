@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font: 14px system-ui, sans-serif; width: 220px; padding: 12px; }
+    h3 { margin: 0 0 8px; font-size: 15px; }
+    .count { font-size: 28px; font-weight: 700; margin-bottom: 10px; }
+    label { display: block; margin-bottom: 4px; }
+    input { width: 70px; padding: 4px; }
+    button { margin-top: 8px; padding: 5px 10px; cursor: pointer; }
+    #msg { margin-top: 6px; font-size: 12px; opacity: .7; min-height: 14px; }
+  </style>
+</head>
+<body>
+  <h3>Shorts today</h3>
+  <div class="count"><span id="count">0</span> / <span id="limitShown">20</span></div>
+  <label for="limit">Daily limit</label>
+  <input id="limit" type="number" min="1" value="20">
+  <button id="save">Save</button>
+  <button id="reset">Reset count</button>
+  <div id="msg"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
