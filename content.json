@@ -1,0 +1,94 @@
+const DEFAULT_LIMIT = 20;
+let lastId = null;
+let lastHref = location.href;
+let overlay = null;
+let pauseTimer = null;
+
+function todayKey() {
+  // local date, e.g. 2026-10-22 (resets at your local midnight)
+  return new Date().toLocaleDateString("en-CA");
+}
+
+function getShortId() {
+  const m = location.pathname.match(/^\/shorts\/([\w-]+)/);
+  return m ? m[1] : null;
+}
+
+async function getState() {
+  const s = await chrome.storage.local.get({ day: "", seen: [], limit: DEFAULT_LIMIT });
+  if (s.day !== todayKey()) {
+    s.day = todayKey();
+    s.seen = [];
+    await chrome.storage.local.set({ day: s.day, seen: [] });
+  }
+  return s;
+}
+
+function block(limit) {
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "shorts-limiter-overlay";
+    overlay.style.cssText =
+      "position:fixed;inset:0;z-index:2147483647;background:#000;color:#fff;" +
+      "display:flex;align-items:center;justify-content:center;flex-direction:column;" +
+      "font:600 32px system-ui,sans-serif;text-align:center;gap:12px;";
+    overlay.innerHTML =
+      "<div>enough for today.</div>" +
+      '<div style="font-size:16px;font-weight:400;opacity:.6">' +
+      limit + " shorts is your limit</div>";
+    document.documentElement.appendChild(overlay);
+  }
+  // keep any playing video silent while blocked
+  if (!pauseTimer) {
+    pauseTimer = setInterval(() => {
+      document.querySelectorAll("video").forEach((v) => {
+        if (!v.paused) v.pause();
+      });
+    }, 500);
+  }
+}
+
+function unblock() {
+  if (overlay) {
+    overlay.remove();
+    overlay = null;
+  }
+  if (pauseTimer) {
+    clearInterval(pauseTimer);
+    pauseTimer = null;
+  }
+}
+
+async function check() {
+  const id = getShortId();
+  if (!id) {
+    lastId = null;
+    unblock();
+    return;
+  }
+  const s = await getState();
+  if (id !== lastId) {
+    lastId = id;
+    if (!s.seen.includes(id)) {
+      s.seen.push(id);
+      await chrome.storage.local.set({ day: s.day, seen: s.seen });
+    }
+  }
+  if (s.seen.length >= s.limit) block(s.limit);
+  else unblock();
+}
+
+// YouTube is a single-page app, so watch for URL changes
+window.addEventListener("yt-navigate-finish", check);
+window.addEventListener("popstate", check);
+setInterval(() => {
+  if (location.href !== lastHref) {
+    lastHref = location.href;
+    check();
+  }
+}, 500);
+
+// re-check when limit/count is changed from the popup
+chrome.storage.onChanged.addListener(() => check());
+
+check();
